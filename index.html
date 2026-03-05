@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Laboratory Audit Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Award-winning minimalist aesthetic & Print optimizations */
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background-color: #f8fafc; color: #0f172a; }
+        
+        /* Custom Toggle Switch styling */
+        .toggle-checkbox:checked { right: 0; border-color: #10b981; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #10b981; }
+        .toggle-checkbox:checked + .toggle-label:after { transform: translateX(100%); border-color: white; }
+        
+        @media print {
+            @page { size: A4 portrait; margin: 1cm; }
+            body { background: white; margin: 0; padding: 0; }
+            .no-print { display: none !important; }
+            #report-container { 
+                display: block !important;
+                position: static !important;
+                width: 100% !important; 
+                visibility: visible !important;
+            }
+            .signature-block { page-break-inside: avoid !important; margin-top: 50px !important; }
+            .findings-table { page-break-inside: auto; }
+            .findings-table tr { page-break-inside: avoid; page-break-after: auto; }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div id="app-container" class="max-w-5xl mx-auto p-6 no-print">
+        
+        <header class="mb-10 text-center">
+            <h1 class="text-4xl font-black text-slate-900 tracking-tight">Comprehensive <span class="text-red-700">Audit</span></h1>
+            <p class="text-slate-500 mt-2 font-medium">Directorate General of PHC - Dhofar</p>
+        </header>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Region</label>
+                    <select class="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm font-medium focus:ring-2 focus:ring-red-500 outline-none transition-all" disabled>
+                        <option value="Dhofar" selected>Dhofar</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Wilayat</label>
+                    <select id="wilayat-select" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm font-medium focus:ring-2 focus:ring-red-500 outline-none transition-all">
+                        <option value="">Select Wilayat...</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Institution</label>
+                    <select id="institution-select" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm font-medium focus:ring-2 focus:ring-red-500 outline-none transition-all" disabled>
+                        <option value="">Select Wilayat first...</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Auditor Name</label>
+                    <input type="text" id="auditor-name" placeholder="Enter your name" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm font-medium focus:ring-2 focus:ring-red-500 outline-none transition-all">
+                </div>
+            </div>
+        </div>
+
+        <div id="checklist-container" class="space-y-8 mb-10"></div>
+
+        <div class="sticky bottom-6 flex justify-end">
+            <button onclick="generateReport()" class="bg-red-700 hover:bg-red-800 text-white px-8 py-4 rounded-xl font-bold shadow-lg shadow-red-700/30 transform transition-transform hover:-translate-y-1 flex items-center gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M16 13H8"></path><path d="M16 17H8"></path><path d="M10 9H8"></path></svg>
+                Generate Smart Report
+            </button>
+        </div>
+
+    </div>
+
+    <div id="report-container" class="hidden max-w-4xl mx-auto p-8 bg-white my-8 rounded-2xl shadow-xl">
+        <div class="flex justify-between items-start border-b-4 border-red-700 pb-6 mb-8">
+            <div>
+                <h1 class="text-2xl font-black text-slate-900 uppercase">Ministry of Health</h1>
+                <h2 class="text-sm text-slate-500 font-bold tracking-widest">Directorate General of PHC - Dhofar</h2>
+                <div class="mt-4 bg-red-700 text-white inline-block px-4 py-1 rounded text-[10px] font-black uppercase tracking-widest">Laboratory Audit Summary</div>
+            </div>
+            <div class="text-right flex flex-col items-end">
+                <p class="text-[10px] font-mono text-slate-400" id="rep-id">ID: AUD-2026</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-4 mb-8">
+            <div class="col-span-2 grid grid-cols-2 gap-y-4 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                <div><p class="text-[10px] font-black text-slate-400 uppercase">Institution</p><p class="text-sm font-bold" id="rep-inst">-</p></div>
+                <div><p class="text-[10px] font-black text-slate-400 uppercase">Wilayat</p><p class="text-sm font-bold" id="rep-wilayat">-</p></div>
+                <div><p class="text-[10px] font-black text-slate-400 uppercase">Auditor</p><p class="text-sm font-bold" id="rep-auditor">-</p></div>
+                <div><p class="text-[10px] font-black text-slate-400 uppercase">Date</p><p class="text-sm font-bold" id="rep-date">-</p></div>
+            </div>
+            <div class="bg-red-800 rounded-2xl p-6 text-white flex flex-col justify-center items-center">
+                <p class="text-[10px] font-black uppercase tracking-widest opacity-80 mb-1">Compliance</p>
+                <h4 class="text-4xl font-black" id="rep-score">100%</h4>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-6 mb-8">
+            <div class="bg-emerald-50 border border-emerald-100 p-5 rounded-xl">
+                <h3 class="text-emerald-800 font-black text-[10px] uppercase mb-4">Strengths (100% Compliant)</h3>
+                <ul id="rep-strengths" class="space-y-2"></ul>
+            </div>
+            <div class="bg-orange-50 border border-orange-100 p-5 rounded-xl">
+                <h3 class="text-orange-800 font-black text-[10px] uppercase mb-4">Opportunities to Improve</h3>
+                <ul id="rep-opportunities" class="space-y-2"></ul>
+            </div>
+        </div>
+
+        <div class="mb-10 findings-table">
+            <h3 class="text-xs font-black uppercase text-slate-900 mb-4 border-l-4 border-red-700 pl-3">Corrective Action Matrix</h3>
+            <div class="border border-slate-200 rounded-xl overflow-hidden">
+                <table class="w-full text-[11px] text-left border-collapse">
+                    <thead class="bg-slate-900 text-white font-bold uppercase tracking-tighter">
+                        <tr><th class="p-3 border-r border-slate-700 w-1/4">Area</th><th class="p-3 border-r border-slate-700 w-1/2">Requirement</th><th class="p-3 w-1/4">Auditor Remark</th></tr>
+                    </thead>
+                    <tbody id="rep-matrix" class="divide-y divide-slate-200"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="mt-20 flex justify-between gap-12 signature-block">
+            <div class="flex-1 text-center">
+                <div class="h-10 border-b-2 border-slate-300 mb-2"></div>
+                <p class="text-[9px] font-black uppercase text-slate-400 tracking-widest">Auditor Signature</p>
+                <p class="text-xs font-bold text-slate-900 mt-1" id="rep-sig-auditor">-</p>
+            </div>
+            <div class="flex-1 text-center">
+                <div class="h-10 border-b-2 border-slate-300 mb-2"></div>
+                <p class="text-[9px] font-black uppercase text-slate-400 tracking-widest">Laboratory In-Charge</p>
+                <p class="text-xs font-bold text-slate-900 mt-1">Reviewer Name & Signature</p>
+            </div>
+        </div>
+        
+        <div class="mt-8 text-center no-print">
+            <button onclick="window.print()" class="bg-slate-900 hover:bg-slate-800 text-white px-6 py-2 rounded-lg text-sm font-bold">Print / Save as PDF</button>
+            <button onclick="location.reload()" class="ml-4 text-slate-500 hover:text-slate-800 text-sm font-bold underline">Start New Audit</button>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. YOUR GEOGRAPHIC DATA (UPDATED)
+        // Format: Wilayat,Institution
+        // ==========================================
+        const rawCSVData = `Wilayat,Institution
+Al Mazyunah,Andat HC
+Al Mazyunah,Matoura & Jijwal HC
+Al Mazyunah,Tosinat HC
+Al Mazyunah,Mitn HC
+Al Mazyunah,Harwib HC
+Al Mazyunah,Al Mazyunah Hospital
+Dhalqut,Khadrafi HC
+Dhalqut,Dalkut HC
+Mirbat,Mirbat Hospital
+Mirbat,Tawi Atayr Hospital
+Muqshin,Muqshin HC
+Muqshin,Al Mashash HC
+Muqshin,Marsodad HC
+Rakhyut,Rakhyut Hospital
+Rakhyut,Shahb Asayb HC
+Sadah,Hasik HC
+Sadah,Hadbin HC
+Sadah,Sadah Hospital
+Sadah,Sawb HC
+Salalah,Hijayf HC
+Salalah,Qayrun Hayriti HC
+Salalah,Salalah Al Jadidah HC
+Salalah,Awqad HC
+Salalah,Al Dahareez HC
+Salalah,Salalah Al Gharbia HC
+Salalah,Taitam HC
+Salalah,As Saadah HC
+Shalim,A' Shuwaymiyah HC
+Shalim,Sharbthat HC
+Shalim,Kubut HC
+Shalim,Dimit Hc
+Shalim,Shalim Hospital
+Shalim,Al Hallaniyat HC
+Taqah,Jibjat HC
+Taqah,Taqah Hospital
+Taqah,Madinat Al Haqq Hospital
+Thumrayt,Mudayy HC
+Thumrayt,Thumrayt Hospital
+Thumrayt,Aiboot '2' HC
+Thumrayt,Burbazoom HC
+Thumrayt,Al Hashman HC
+Thumrayt,Bithnah HC
+Thumrayt,Dhahbun HC`;
+
+        // ==========================================
+        // 2. YOUR AUDIT INDICATORS (COMPREHENSIVE)
+        // ==========================================
+        const auditCriteria = [
+            { 
+                category: "Environment", 
+                questions: [
+                    "Bench top where specimen is performed routinely cleaned with approved disinfectant at the end of each procedure",
+                    "Lab door locked; access strictly limited to lab person",
+                    "Clerical work is separate from infected materials",
+                    "Phone and keyboard is cleaned daily with 70% alcohol",
+                    "Floor free from stain",
+                    "Wash basin have soap / antiseptic solution",
+                    "Adequate water supply",
+                    "Lab work sink is free from stain"
+                ] 
+            },
+            { 
+                category: "Safety", 
+                questions: [
+                    "Staff aware about clean spill",
+                    "Biohazard Spill kit available",
+                    "Sharp items are discarded in sharp container",
+                    "Sharp container must not be overfilled (use 3/4)",
+                    "PPE is available",
+                    "Gloves worn during procedure",
+                    "Wearing coat and gloves in the lab only",
+                    "Dustbin with appropriate autoclave bag is used: black for non-infected, yellow for infectious",
+                    "Staff aware about the appropriate disposable procedure for blood, urine, sputum, stool sample",
+                    "No food or drink inside lab",
+                    "Eye wash station available",
+                    "Staff aware about lab safety polices",
+                    "Staff follow safe hygienic practice",
+                    "List of lab hazardous material is available",
+                    "Fire extinguisher available, staff know how to use it",
+                    "Exhausted fan checked periodically",
+                    "Appropriate Chemical storage available & labeled with hazard symbol",
+                    "Sample storage in refrigerator has separate area",
+                    "Staff aware how to do triple package for high infectious sample"
+                ] 
+            },
+            { 
+                category: "Equipment", 
+                questions: [
+                    "Lab inventory, condemnation, return back, breakdown, receive voucher file available",
+                    "Equipment maintenance file available",
+                    "Equipment's manual available"
+                ] 
+            },
+            { 
+                category: "Lab Procedure", 
+                questions: [
+                    "Laboratory information system (LIS) connected with referral hospital.",
+                    "Laboratory information system (LIS) alert the technician about critical value",
+                    "Staff follow the pending result and solve any issue with IT department",
+                    "Staff aware about the procedure of notifying critical value to the physician and record that in the system for in-lab results",
+                    "Notification of referral test critical value file is available.",
+                    "Staff aware how to get statistic from the system (MP case detected)",
+                    "Lab has a clear criterion for sample rejection",
+                    "Staff has competence: CBC",
+                    "Staff has competence: Glucose test (colorimeter)",
+                    "Staff has competence: Hb manual",
+                    "Staff has competence: Wbc, differential count manual",
+                    "Staff has competence: Grouping, Sickling test",
+                    "Staff has competence: Semen analysis",
+                    "Staff has competence: Malaria test",
+                    "Staff has competence: Urine routine, UPT",
+                    "Staff has competence: Stool routine, Occult blood",
+                    "Staff has competence: Serology test (ASO, RA, RBR, Brucella)",
+                    "Staff has competence: Kato Katz schistosomiasis test",
+                    "Staff has competence: Peripheral Smear (PS) Staining & interpretation",
+                    "Staff has competence: Routine biochemistry tests",
+                    "Staff able to operate biochemistry analyzer & do routine maintenance",
+                    "Staff able to operate haematology analyzer & do routine maintenance",
+                    "Staff aware about sample transportation guidelines",
+                    "Internal Quality control run for all test with available control",
+                    "Participation in available External quality control (EQC) program",
+                    "Reporting result according to SOPs, normal reference updated regularly",
+                    "Staff aware about IRLS (AMAN) use"
+                ] 
+            },
+            { 
+                category: "Documentation", 
+                questions: [
+                    "Standard Operating Procedure (SOP) available",
+                    "Lab safety manual available",
+                    "Lab policy / Guideline for collection, storage and transportation of specimen available",
+                    "Lab Quality manual polices & procedures available",
+                    "Lab biosafety manual / Prevention and management of blood and body fluids exposure available",
+                    "Lab Quality control file (IQC,EQC) available",
+                    "MSDS for chemical material available",
+                    "Continuous medical education (CME) file or electronic available",
+                    "Quality Assurance file available"
+                ] 
+            },
+            { 
+                category: "Laboratory Store & Supply system", 
+                questions: [
+                    "Staff aware about internal indent in the system",
+                    "Item consumption, expiry & stock monitor",
+                    "Staff aware about dealing procedure with expiry items",
+                    "Slow moving item & exchange short expiry item with other Health Institutions"
+                ] 
+            },
+            { 
+                category: "Staff learning & development", 
+                questions: [
+                    "Training needs inspection",
+                    "Staff train on semen analysis & MP as needed to refresh knowledge",
+                    "Participate in CME inside institute"
+                ] 
+            }
+        ];
+
+        // ==========================================
+        // APPLICATION LOGIC (Do not edit below unless necessary)
+        // ==========================================
+        
+        function parseCSVToGeographicData(csvText) {
+            const lines = csvText.trim().split('\n');
+            const data = {};
+            for (let i = 1; i < lines.length; i++) {
+                const parts = lines[i].split(',');
+                if (parts.length >= 2) {
+                    const wilayat = parts[0].trim();
+                    const institution = parts[1].trim();
+                    if (!data[wilayat]) data[wilayat] = [];
+                    data[wilayat].push(institution);
+                }
+            }
+            return data;
+        }
+
+        const geographicData = parseCSVToGeographicData(rawCSVData);
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const wilayatSelect = document.getElementById('wilayat-select');
+            const instSelect = document.getElementById('institution-select');
+
+            Object.keys(geographicData).forEach(wilayat => {
+                let opt = document.createElement('option');
+                opt.value = wilayat;
+                opt.textContent = wilayat;
+                wilayatSelect.appendChild(opt);
+            });
+
+            wilayatSelect.addEventListener('change', function() {
+                instSelect.innerHTML = '<option value="">Select Institution...</option>';
+                if(this.value) {
+                    instSelect.disabled = false;
+                    geographicData[this.value].forEach(inst => {
+                        let opt = document.createElement('option');
+                        opt.value = inst;
+                        opt.textContent = inst;
+                        instSelect.appendChild(opt);
+                    });
+                } else {
+                    instSelect.disabled = true;
+                }
+            });
+
+            const checklistContainer = document.getElementById('checklist-container');
+            
+            auditCriteria.forEach((section, sIndex) => {
+                const sectionDiv = document.createElement('div');
+                sectionDiv.className = "bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden";
+                
+                let questionsHTML = '';
+                section.questions.forEach((q, qIndex) => {
+                    const id = `q_${sIndex}_${qIndex}`;
+                    questionsHTML += `
+                        <div class="p-4 border-t border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-slate-50 transition-colors">
+                            <div class="flex-1"><p class="text-sm font-bold text-slate-800">${q}</p></div>
+                            <div class="flex items-center gap-4">
+                                <input type="text" id="remark_${id}" placeholder="State issue..." class="hidden md:w-64 text-xs border border-slate-200 rounded p-2 focus:ring-red-500">
+                                <div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+                                    <input type="checkbox" name="toggle_${id}" id="${id}" checked class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer z-10" onchange="toggleRemark('${id}')"/>
+                                    <label for="${id}" class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-300 cursor-pointer"></label>
+                                </div>
+                                <span id="label_${id}" class="text-xs font-bold text-emerald-600 w-16 uppercase">Compliant</span>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                sectionDiv.innerHTML = `
+                    <div class="bg-slate-900 px-6 py-4 flex items-center gap-3">
+                        <div class="w-2 h-2 rounded-full bg-red-500"></div>
+                        <h3 class="text-white font-bold uppercase tracking-wide text-sm">${section.category}</h3>
+                    </div>
+                    <div>${questionsHTML}</div>
+                `;
+                checklistContainer.appendChild(sectionDiv);
+            });
+        });
+
+        window.toggleRemark = function(id) {
+            const checkbox = document.getElementById(id);
+            const label = document.getElementById(`label_${id}`);
+            const remark = document.getElementById(`remark_${id}`);
+
+            if(checkbox.checked) {
+                label.textContent = "Compliant";
+                label.className = "text-xs font-bold text-emerald-600 w-16 uppercase";
+                remark.classList.add("hidden");
+                remark.value = ""; 
+            } else {
+                label.textContent = "Action Req.";
+                label.className = "text-xs font-bold text-red-600 w-16 uppercase";
+                remark.classList.remove("hidden");
+                remark.focus();
+            }
+        };
+
+        window.generateReport = function() {
+            const wilayat = document.getElementById('wilayat-select').value;
+            const inst = document.getElementById('institution-select').value;
+            const auditor = document.getElementById('auditor-name').value || "Unspecified Auditor";
+            
+            if(!wilayat || !inst) {
+                alert("Please select a Wilayat and Institution before generating the report.");
+                return;
+            }
+
+            let totalQuestions = 0;
+            let totalCompliant = 0;
+            let sectionScores = [];
+            let negativeFindings = [];
+
+            auditCriteria.forEach((section, sIndex) => {
+                let sectionCompliant = 0;
+                section.questions.forEach((q, qIndex) => {
+                    totalQuestions++;
+                    const id = `q_${sIndex}_${qIndex}`;
+                    const isCompliant = document.getElementById(id).checked;
+                    
+                    if(isCompliant) {
+                        sectionCompliant++;
+                        totalCompliant++;
+                    } else {
+                        const remark = document.getElementById(`remark_${id}`).value || "No remark provided.";
+                        negativeFindings.push({ category: section.category, question: q, remark: remark });
+                    }
+                });
+                const percentage = (sectionCompliant / section.questions.length) * 100;
+                sectionScores.push({ category: section.category, score: percentage });
+            });
+
+            const overallScore = ((totalCompliant / totalQuestions) * 100).toFixed(1);
+            
+            document.getElementById('rep-inst').textContent = inst;
+            document.getElementById('rep-wilayat').textContent = wilayat;
+            document.getElementById('rep-auditor').textContent = auditor;
+            document.getElementById('rep-sig-auditor').textContent = auditor;
+            
+            const today = new Date();
+            document.getElementById('rep-date').textContent = today.toISOString().split('T')[0];
+            document.getElementById('rep-id').textContent = `ID: AUD-${inst.substring(0,3).toUpperCase()}-${today.getFullYear()}`;
+            document.getElementById('rep-score').textContent = `${overallScore}%`;
+
+            const strengthsList = document.getElementById('rep-strengths');
+            const oppList = document.getElementById('rep-opportunities');
+            strengthsList.innerHTML = '';
+            oppList.innerHTML = '';
+
+            sectionScores.forEach(sec => {
+                const li = document.createElement('li');
+                if(sec.score === 100) {
+                    li.className = "text-xs text-emerald-900 font-medium flex items-center gap-2";
+                    li.innerHTML = `<div class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div> ${sec.category} (100%)`;
+                    strengthsList.appendChild(li);
+                } else {
+                    li.className = "text-xs text-orange-900 font-medium flex items-center gap-2";
+                    li.innerHTML = `<div class="w-1.5 h-1.5 bg-orange-500 rounded-full"></div> ${sec.category} (${sec.score.toFixed(0)}%)`;
+                    oppList.appendChild(li);
+                }
+            });
+
+            if(strengthsList.innerHTML === '') strengthsList.innerHTML = '<li class="text-xs text-emerald-700 italic">No areas achieved full compliance.</li>';
+            if(oppList.innerHTML === '') oppList.innerHTML = '<li class="text-xs text-orange-700 italic">Excellent! No immediate opportunities for improvement identified.</li>';
+
+            const matrix = document.getElementById('rep-matrix');
+            matrix.innerHTML = '';
+            if(negativeFindings.length === 0) {
+                matrix.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-xs text-slate-500 italic">No corrective actions required. The institution is fully compliant.</td></tr>`;
+            } else {
+                negativeFindings.forEach(finding => {
+                    matrix.innerHTML += `
+                        <tr>
+                            <td class="p-3 border-r border-slate-200 font-bold text-slate-800">${finding.category}</td>
+                            <td class="p-3 border-r border-slate-200 text-slate-600">${finding.question}</td>
+                            <td class="p-3 text-red-700 font-medium">${finding.remark}</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            document.getElementById('app-container').classList.add('hidden');
+            document.getElementById('report-container').classList.remove('hidden');
+            window.scrollTo(0,0);
+        }
+    </script>
+</body>
+</html>
