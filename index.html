@@ -1,155 +1,222 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Laboratory Audit Tool</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        /* Award-winning minimalist aesthetic & Print optimizations */
-        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background-color: #f8fafc; color: #0f172a; }
-        
-        /* Custom Toggle Switch styling */
-        .toggle-checkbox:checked { right: 0; border-color: #10b981; }
-        .toggle-checkbox:checked + .toggle-label { background-color: #10b981; }
-        .toggle-checkbox:checked + .toggle-label:after { transform: translateX(100%); border-color: white; }
-        
-        @media print {
-            @page { size: A4 portrait; margin: 1cm; }
-            body { background: white; margin: 0; padding: 0; }
-            .no-print { display: none !important; }
-            #report-container { 
-                display: block !important;
-                position: static !important;
-                width: 100% !important; 
-                visibility: visible !important;
-            }
-            .signature-block { page-break-inside: avoid !important; margin-top: 50px !important; }
-            .findings-table { page-break-inside: auto; }
-            .findings-table tr { page-break-inside: avoid; page-break-after: auto; }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Smart Laboratory Audit</title>
+<style>
+:root{
+  --bg:#f6f8fc; --card:#fff; --ink:#1e293b; --mute:#4f5f75; --line:#e8edf5;
+  --met:#34d399; --met-bg:#e8faf2; --met-ink:#047857;
+  --no:#fb7185;  --no-bg:#fff0f2;  --no-ink:#be123c;
+  --na:#94a3b8;  --na-bg:#f1f5f9;  --na-ink:#475569;
+  --blue:#60a5fa; --blue-bg:#eaf3ff; --amber:#fbbf24; --amber-bg:#fff7e0;
+  --accent:#4c63c4; --accent2:#a78bfa;
+  --r:18px; --shadow:0 4px 24px rgba(30,41,59,.06);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:110px}
+body{margin:0;font-family:"Segoe UI",system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5}
+button,input,select{font:inherit;color:inherit}
+.wrap{max-width:980px;margin:0 auto;padding:0 18px 90px}
+
+/* hero */
+.hero{background:linear-gradient(120deg,#e0ecff 0%,#efe7ff 55%,#e3f9f0 100%);padding:34px 18px 70px;text-align:center}
+.hero .org{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);font-weight:700}
+.hero h1{margin:6px 0 4px;font-size:clamp(26px,5vw,38px);font-weight:800;letter-spacing:-.02em}
+.hero h1 span{color:#4c63c4}
+.hero p{margin:0;color:var(--mute)}
+.steps{display:flex;justify-content:center;gap:10px;margin-top:20px;flex-wrap:wrap}
+.step{display:flex;align-items:center;gap:8px;background:#ffffffaa;border-radius:99px;padding:6px 14px 6px 6px;font-size:13px;font-weight:600;color:var(--mute)}
+.step b{width:24px;height:24px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:12px;color:var(--accent)}
+.step.on{color:var(--ink);background:#fff;box-shadow:var(--shadow)}
+.step.on b{background:var(--accent);color:#fff}
+
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);border:1px solid var(--line)}
+.details{margin-top:-44px;padding:22px;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;position:relative}
+.field label{display:block;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin-bottom:6px}
+.field input,.field select{width:100%;background:#f8faff;border:1.5px solid var(--line);border-radius:12px;padding:11px 12px;outline:none;transition:.2s}
+.field input:focus,.field select:focus{border-color:var(--accent);box-shadow:0 0 0 4px #7c9cf520;background:#fff}
+.field.err input,.field.err select{border-color:var(--no);background:var(--no-bg)}
+.shake{animation:shake .4s}
+@keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+.hint{grid-column:1/-1;font-size:13px;color:var(--mute);background:var(--blue-bg);border-radius:12px;padding:10px 14px;display:flex;gap:10px;align-items:center}
+
+/* sticky meter */
+.bar{position:sticky;top:0;z-index:20;margin:18px -18px 0;padding:10px 18px;background:#f6f8fcee;backdrop-filter:blur(10px)}
+.bar-in{display:flex;align-items:center;gap:16px;padding:10px 16px;flex-wrap:wrap}
+.ring{position:relative;width:62px;height:62px;flex:none}
+.ring svg{transform:rotate(-90deg)}
+.ring .v{position:absolute;inset:0;display:grid;place-items:center;font-weight:800;font-size:15px}
+.stats{display:flex;gap:8px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:6px;border-radius:99px;padding:4px 11px;font-size:12px;font-weight:700}
+.chip i{width:8px;height:8px;border-radius:50%;display:block}
+.c-met{background:var(--met-bg);color:var(--met-ink)}.c-met i{background:var(--met)}
+.c-no{background:var(--no-bg);color:var(--no-ink)}.c-no i{background:var(--no)}
+.c-na{background:var(--na-bg);color:var(--na-ink)}.c-na i{background:var(--na)}
+.nav{display:flex;gap:6px;overflow-x:auto;flex:1;min-width:220px;padding:2px;scrollbar-width:none}
+.nav a{white-space:nowrap;font-size:12px;font-weight:600;text-decoration:none;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:99px;padding:4px 10px;display:flex;gap:6px;align-items:center;transition:.2s}
+.nav a:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+.nav a i{width:8px;height:8px;border-radius:50%}
+
+/* sections */
+.sec{margin-top:18px;overflow:hidden;animation:rise .5s both}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}}
+.sec-h{display:flex;align-items:center;gap:14px;padding:16px 20px;cursor:pointer;user-select:none;background:linear-gradient(90deg,#f4f7ff,#fff)}
+.sec-h h3{margin:0;font-size:15px;font-weight:700;flex:1}
+.sec-h small{display:block;color:var(--mute);font-weight:500;font-size:12px}
+.mini{width:110px;height:8px;background:var(--na-bg);border-radius:9px;overflow:hidden}
+.mini div{height:100%;border-radius:9px;transition:width .6s cubic-bezier(.2,.8,.2,1),background .3s}
+.pct{font-weight:800;font-size:14px;min-width:46px;text-align:right}
+.caret{transition:.3s;color:var(--mute)}
+.sec.closed .caret{transform:rotate(-90deg)}
+.sec-b{display:grid;grid-template-rows:1fr;transition:grid-template-rows .35s ease}
+.sec.closed .sec-b{grid-template-rows:0fr}
+.sec-b>div{overflow:hidden}
+.tools{display:flex;gap:8px;padding:10px 20px;border-top:1px solid var(--line);background:#fcfdff}
+.tools button{border:1px solid var(--line);background:#fff;border-radius:9px;padding:4px 10px;font-size:12px;font-weight:600;color:var(--mute);cursor:pointer;transition:.2s}
+.tools button:hover{color:var(--ink);border-color:var(--accent)}
+
+.q{border-top:1px solid var(--line);padding:12px 20px;transition:background .3s}
+.q.no{background:var(--no-bg)}
+.q.na{background:#fafbfd}
+.q.flash{animation:flash .7s}
+@keyframes flash{from{background:#dbeafe}}
+.q-row{display:flex;align-items:center;gap:16px;justify-content:space-between;flex-wrap:wrap}
+.q-t{flex:1;min-width:230px;font-size:14px;font-weight:500}
+.q.na .q-t{color:var(--mute)}
+.seg{display:inline-flex;background:var(--na-bg);border-radius:12px;padding:3px;gap:2px}
+.seg label{position:relative;cursor:pointer}
+.seg input{position:absolute;opacity:0;inset:0;cursor:pointer}
+.seg span{display:block;padding:6px 14px;border-radius:9px;font-size:12px;font-weight:700;color:var(--mute);transition:.2s}
+.seg input:focus-visible+span{outline:2px solid var(--accent)}
+.seg input[value=met]:checked+span{background:var(--met);color:#fff;box-shadow:0 2px 8px #34d39966}
+.seg input[value=no]:checked+span{background:var(--no);color:#fff;box-shadow:0 2px 8px #fb718566}
+.seg input[value=na]:checked+span{background:var(--na);color:#fff}
+.more{display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s}
+.q.no .more{grid-template-rows:1fr}
+.more>div{overflow:hidden;display:flex;gap:10px;flex-wrap:wrap}
+.q.no .more>div{padding-top:10px}
+.more input[type=text]{flex:1;min-width:200px;border:1.5px solid #fecdd3;background:#fff;border-radius:10px;padding:8px 11px;font-size:13px;outline:none}
+.more input[type=text]:focus{border-color:var(--no)}
+.more select{border:1.5px solid #fecdd3;background:#fff;border-radius:10px;padding:8px 10px;font-size:13px}
+
+/* floating action */
+.fab{position:fixed;left:0;right:0;bottom:0;padding:12px 18px;display:flex;justify-content:center;background:linear-gradient(transparent,var(--bg) 40%);z-index:30;pointer-events:none}
+.btn{pointer-events:auto;border:0;border-radius:14px;padding:13px 26px;font-weight:700;font-size:15px;cursor:pointer;transition:.2s;display:inline-flex;gap:8px;align-items:center}
+.btn.primary{background:linear-gradient(90deg,#4c63c4,#6d4fc4);color:#fff;box-shadow:0 8px 24px #7c9cf566}
+.btn.primary:hover{transform:translateY(-2px);box-shadow:0 12px 28px #7c9cf588}
+.btn.ghost{background:#fff;border:1px solid var(--line);color:var(--ink)}
+.btn.ghost:hover{border-color:var(--accent)}
+
+/* report */
+#report{max-width:860px;margin:24px auto;padding:34px;background:#fff;border-radius:var(--r);box-shadow:var(--shadow);animation:rise .6s both}
+.r-head{display:flex;justify-content:space-between;gap:16px;border-bottom:3px solid var(--accent);padding-bottom:16px;margin-bottom:20px;flex-wrap:wrap}
+.r-head h1{margin:0;font-size:22px;font-weight:800}
+.r-head p{margin:2px 0 0;color:var(--mute);font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+.tag{display:inline-block;background:var(--blue-bg);color:#3b6ad8;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:4px 12px;border-radius:99px;margin-top:10px}
+.mono{font-family:ui-monospace,Consolas,monospace;font-size:12px;color:var(--mute);text-align:right}
+.meta{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;background:#f8faff;border-radius:14px;padding:14px 16px;margin-bottom:18px}
+.meta p{margin:0;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.meta b{font-size:14px}
+.hero-r{display:grid;grid-template-columns:260px 1fr;gap:20px;align-items:center;margin-bottom:18px}
+.gauge{text-align:center;position:relative}
+.gauge .big{position:absolute;left:0;right:0;bottom:2px;font-size:40px;font-weight:800;line-height:1}
+.badge{display:inline-block;padding:5px 16px;border-radius:99px;font-weight:800;font-size:13px;margin-top:6px}
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.tile{border-radius:14px;padding:12px;text-align:center}
+.tile b{display:block;font-size:26px;font-weight:800;line-height:1.1}
+.tile span{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.summary{background:linear-gradient(120deg,#f1f5ff,#f7f1ff);border-radius:14px;padding:16px 18px;font-size:14px;margin-bottom:20px}
+.summary h4,.r-h{margin:0 0 8px;font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#4c63c4}
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.panel{border:1px solid var(--line);border-radius:14px;padding:14px;break-inside:avoid}
+.legend{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;font-size:12px;font-weight:600;margin-top:6px}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
+.brow{display:grid;grid-template-columns:150px 1fr 48px;gap:10px;align-items:center;font-size:12px;font-weight:600;margin:7px 0}
+.btrack{height:12px;background:var(--na-bg);border-radius:9px;overflow:hidden}
+.btrack div{height:100%;width:0;border-radius:9px;transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+.good{background:var(--met-bg);border-radius:14px;padding:14px 16px}.good .r-h{color:var(--met-ink)}
+.warn{background:var(--amber-bg);border-radius:14px;padding:14px 16px}.warn .r-h{color:#a16207}
+.two ul{list-style:none;margin:0;padding:0;font-size:13px}
+.two li{display:flex;gap:8px;align-items:center;margin:5px 0}
+.two li i{width:7px;height:7px;border-radius:50%;flex:none}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{background:#eef2ff;color:#3b4a8f;text-align:left;padding:9px 10px;font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+td{padding:9px 10px;border-top:1px solid var(--line);vertical-align:top}
+tr{break-inside:avoid}
+.pri{font-weight:800;font-size:10px;padding:2px 9px;border-radius:99px;text-transform:uppercase;white-space:nowrap}
+.p-High{background:#ffe0e5;color:#be123c}.p-Medium{background:#fff0c7;color:#a16207}.p-Low{background:#e0efff;color:#1d4ed8}
+.sig{display:flex;gap:50px;margin-top:56px;break-inside:avoid}
+.sig div{flex:1;text-align:center;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.sig hr{border:0;border-top:2px solid #cbd5e1;margin:0 0 6px;height:34px;border-top-width:2px}
+.sig b{display:block;font-size:12px;color:var(--ink);text-transform:none;letter-spacing:0;margin-top:2px}
+.r-actions{display:flex;gap:10px;justify-content:center;margin:20px 0}
+
+@media (max-width:700px){
+  .hero-r,.charts,.two{grid-template-columns:1fr}
+  .meta{grid-template-columns:1fr 1fr}
+  .mini{display:none}
+  .brow{grid-template-columns:110px 1fr 44px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+@media print{
+  @page{size:A4 portrait;margin:12mm}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{background:#fff}
+  .no-print,.hero,.fab{display:none!important}
+  #report{margin:0;padding:0;box-shadow:none;max-width:none;animation:none}
+}
+</style>
 </head>
-<body class="antialiased">
+<body>
 
-    <div id="app-container" class="max-w-5xl mx-auto p-6 no-print">
-        
-        <header class="mb-10 text-center">
-            <h1 class="text-4xl font-black text-slate-900 tracking-tight">Comprehensive <span class="text-red-700">Audit</span></h1>
-            <p class="text-slate-500 mt-2 font-medium">Directorate General of Health Services Dhofar</p>
-        </header>
+<div id="app">
+  <header class="hero no-print">
+    <div class="org">Directorate General of Health Services · Dhofar</div>
+    <h1>Smart Laboratory <span>Audit</span></h1>
+    <p>Everything starts as <b>Met</b> — only flag what you find.</p>
+    <div class="steps">
+      <div class="step on"><b>1</b>Details</div>
+      <div class="step on"><b>2</b>Checklist</div>
+      <div class="step"><b>3</b>Smart report</div>
+    </div>
+  </header>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 mb-8">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Governorate</label>
-                    <select class="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm font-medium focus:ring-2 focus:ring-red-500 outline-none transition-all" disabled>
-                        <option value="Dhofar" selected>Dhofar</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Wilayat</label>
-                    <select id="wilayat-select" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm font-medium focus:ring-2 focus:ring-red-500 outline-none transition-all">
-                        <option value="">Select Wilayat...</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Institution</label>
-                    <select id="institution-select" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm font-medium focus:ring-2 focus:ring-red-500 outline-none transition-all" disabled>
-                        <option value="">Select Wilayat first...</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">Auditor Name</label>
-                    <input type="text" id="auditor-name" placeholder="Enter your name" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm font-medium focus:ring-2 focus:ring-red-500 outline-none transition-all">
-                </div>
-            </div>
+  <main class="wrap no-print">
+    <section class="card details" id="details">
+      <div class="field"><label for="gov">Governorate</label><select id="gov" disabled><option>Dhofar</option></select></div>
+      <div class="field" id="f-wil"><label for="wil">Wilayat</label><select id="wil"><option value="">Select Wilayat…</option></select></div>
+      <div class="field" id="f-inst"><label for="inst">Institution</label><select id="inst" disabled><option value="">Select Wilayat first…</option></select></div>
+      <div class="field"><label for="aud">Auditor name</label><input id="aud" placeholder="Enter your name" autocomplete="name"></div>
+      <div class="field"><label for="date">Audit date</label><input id="date" type="date"></div>
+      <div class="hint">💡 Every requirement is pre-set to <b>Met</b>. Tap <b>Not met</b> to add a remark and priority, or <b>N/A</b> to exclude an item from the score. Progress is saved automatically.</div>
+    </section>
+
+    <div class="bar">
+      <div class="card bar-in">
+        <div class="ring"><svg width="62" height="62" viewBox="0 0 62 62"><circle cx="31" cy="31" r="26" fill="none" stroke="#eef2f7" stroke-width="7"/><circle id="ring-c" cx="31" cy="31" r="26" fill="none" stroke-width="7" stroke-linecap="round" stroke-dasharray="163.4" stroke-dashoffset="0" style="transition:stroke-dashoffset .7s cubic-bezier(.2,.8,.2,1),stroke .4s"/></svg><div class="v" id="ring-v">100%</div></div>
+        <div class="stats">
+          <span class="chip c-met"><i></i><span id="n-met">0</span> Met</span>
+          <span class="chip c-no"><i></i><span id="n-no">0</span> Not met</span>
+          <span class="chip c-na"><i></i><span id="n-na">0</span> N/A</span>
         </div>
-
-        <div id="checklist-container" class="space-y-8 mb-10"></div>
-
-        <div class="sticky bottom-6 flex justify-end">
-            <button onclick="generateReport()" class="bg-red-700 hover:bg-red-800 text-white px-8 py-4 rounded-xl font-bold shadow-lg shadow-red-700/30 transform transition-transform hover:-translate-y-1 flex items-center gap-3">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><path d="M14 2v6h6"></path><path d="M16 13H8"></path><path d="M16 17H8"></path><path d="M10 9H8"></path></svg>
-                Generate Smart Report
-            </button>
-        </div>
-
+        <nav class="nav" id="nav" aria-label="Sections"></nav>
+      </div>
     </div>
 
-    <div id="report-container" class="hidden max-w-4xl mx-auto p-8 bg-white my-8 rounded-2xl shadow-xl">
-        <div class="flex justify-between items-start border-b-4 border-red-700 pb-6 mb-8">
-            <div>
-                <h1 class="text-2xl font-black text-slate-900 uppercase">Ministry of Health</h1>
-                <h2 class="text-sm text-slate-500 font-bold tracking-widest">Directorate General of PHC - Dhofar</h2>
-                <div class="mt-4 bg-red-700 text-white inline-block px-4 py-1 rounded text-[10px] font-black uppercase tracking-widest">Laboratory Audit Summary</div>
-            </div>
-            <div class="text-right flex flex-col items-end">
-                <p class="text-[10px] font-mono text-slate-400" id="rep-id">ID: AUD-2026</p>
-            </div>
-        </div>
+    <div id="sections"></div>
+  </main>
 
-        <div class="grid grid-cols-3 gap-4 mb-8">
-            <div class="col-span-2 grid grid-cols-2 gap-y-4 bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                <div><p class="text-[10px] font-black text-slate-400 uppercase">Institution</p><p class="text-sm font-bold" id="rep-inst">-</p></div>
-                <div><p class="text-[10px] font-black text-slate-400 uppercase">Wilayat</p><p class="text-sm font-bold" id="rep-wilayat">-</p></div>
-                <div><p class="text-[10px] font-black text-slate-400 uppercase">Auditor</p><p class="text-sm font-bold" id="rep-auditor">-</p></div>
-                <div><p class="text-[10px] font-black text-slate-400 uppercase">Date</p><p class="text-sm font-bold" id="rep-date">-</p></div>
-            </div>
-            <div class="bg-red-800 rounded-2xl p-6 text-white flex flex-col justify-center items-center">
-                <p class="text-[10px] font-black uppercase tracking-widest opacity-80 mb-1">Compliance</p>
-                <h4 class="text-4xl font-black" id="rep-score">100%</h4>
-            </div>
-        </div>
+  <div class="fab no-print"><button class="btn primary" id="gen">✨ Generate smart report</button></div>
+</div>
 
-        <div class="grid grid-cols-2 gap-6 mb-8">
-            <div class="bg-emerald-50 border border-emerald-100 p-5 rounded-xl">
-                <h3 class="text-emerald-800 font-black text-[10px] uppercase mb-4">Strengths (100% Compliant)</h3>
-                <ul id="rep-strengths" class="space-y-2"></ul>
-            </div>
-            <div class="bg-orange-50 border border-orange-100 p-5 rounded-xl">
-                <h3 class="text-orange-800 font-black text-[10px] uppercase mb-4">Opportunities to Improve</h3>
-                <ul id="rep-opportunities" class="space-y-2"></ul>
-            </div>
-        </div>
+<div id="report" hidden></div>
 
-        <div class="mb-10 findings-table">
-            <h3 class="text-xs font-black uppercase text-slate-900 mb-4 border-l-4 border-red-700 pl-3">Corrective Action Matrix</h3>
-            <div class="border border-slate-200 rounded-xl overflow-hidden">
-                <table class="w-full text-[11px] text-left border-collapse">
-                    <thead class="bg-slate-900 text-white font-bold uppercase tracking-tighter">
-                        <tr><th class="p-3 border-r border-slate-700 w-1/4">Area</th><th class="p-3 border-r border-slate-700 w-1/2">Requirement</th><th class="p-3 w-1/4">Auditor Remark</th></tr>
-                    </thead>
-                    <tbody id="rep-matrix" class="divide-y divide-slate-200"></tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="mt-20 flex justify-between gap-12 signature-block">
-            <div class="flex-1 text-center">
-                <div class="h-10 border-b-2 border-slate-300 mb-2"></div>
-                <p class="text-[9px] font-black uppercase text-slate-400 tracking-widest">Auditor Signature</p>
-                <p class="text-xs font-bold text-slate-900 mt-1" id="rep-sig-auditor">-</p>
-            </div>
-            <div class="flex-1 text-center">
-                <div class="h-10 border-b-2 border-slate-300 mb-2"></div>
-                <p class="text-[9px] font-black uppercase text-slate-400 tracking-widest">Laboratory In-Charge</p>
-                <p class="text-xs font-bold text-slate-900 mt-1">Reviewer Name & Signature</p>
-            </div>
-        </div>
-        
-        <div class="mt-8 text-center no-print">
-            <button onclick="window.print()" class="bg-slate-900 hover:bg-slate-800 text-white px-6 py-2 rounded-lg text-sm font-bold">Print / Save as PDF</button>
-            <button onclick="location.reload()" class="ml-4 text-slate-500 hover:text-slate-800 text-sm font-bold underline">Start New Audit</button>
-        </div>
-    </div>
-
-    <script>
-        // ==========================================
-        // 1. YOUR GEOGRAPHIC DATA (UPDATED)
-        // Format: Wilayat,Institution
-        // ==========================================
-        const rawCSVData = `Wilayat,Institution
+<script>
+const CSV = `Wilayat,Institution
 Al Mazyunah,Andat HC
 Al Mazyunah,Matoura & Jijwal HC
 Al Mazyunah,Tosinat HC
@@ -194,308 +261,332 @@ Thumrayt,Al Hashman HC
 Thumrayt,Bithnah HC
 Thumrayt,Dhahbun HC`;
 
-        // ==========================================
-        // 2. YOUR AUDIT INDICATORS (COMPREHENSIVE)
-        // ==========================================
-        const auditCriteria = [
-            { 
-                category: "Environment", 
-                questions: [
-                    "Bench top where specimen is performed routinely cleaned with approved disinfectant at the end of each procedure",
-                    "Lab door locked; access strictly limited to lab person",
-                    "Clerical work is separate from infected materials",
-                    "Phone and keyboard is cleaned daily with 70% alcohol",
-                    "Floor free from stain",
-                    "Wash basin have soap / antiseptic solution",
-                    "Adequate water supply",
-                    "Lab work sink is free from stain"
-                ] 
-            },
-            { 
-                category: "Safety", 
-                questions: [
-                    "Staff aware about clean spill",
-                    "Biohazard Spill kit available",
-                    "Sharp items are discarded in sharp container",
-                    "Sharp container must not be overfilled (use 3/4)",
-                    "PPE is available",
-                    "Gloves worn during procedure",
-                    "Wearing coat and gloves in the lab only",
-                    "Dustbin with appropriate autoclave bag is used: black for non-infected, yellow for infectious",
-                    "Staff aware about the appropriate disposable procedure for blood, urine, sputum, stool sample",
-                    "No food or drink inside lab",
-                    "Eye wash station available",
-                    "Staff aware about lab safety polices",
-                    "Staff follow safe hygienic practice",
-                    "List of lab hazardous material is available",
-                    "Fire extinguisher available, staff know how to use it",
-                    "Exhausted fan checked periodically",
-                    "Appropriate Chemical storage available & labeled with hazard symbol",
-                    "Sample storage in refrigerator has separate area",
-                    "Staff aware how to do triple package for high infectious sample"
-                ] 
-            },
-            { 
-                category: "Equipment", 
-                questions: [
-                    "Lab inventory, condemnation, return back, breakdown, receive voucher file available",
-                    "Equipment maintenance file available",
-                    "Equipment's manual available"
-                ] 
-            },
-            { 
-                category: "Lab Procedure", 
-                questions: [
-                    "Laboratory information system (LIS) connected with referral hospital.",
-                    "Laboratory information system (LIS) alert the technician about critical value",
-                    "Staff follow the pending result and solve any issue with IT department",
-                    "Staff aware about the procedure of notifying critical value to the physician and record that in the system for in-lab results",
-                    "Notification of referral test critical value file is available.",
-                    "Staff aware how to get statistic from the system (MP case detected)",
-                    "Lab has a clear criterion for sample rejection",
-                    "Staff has competence: CBC",
-                    "Staff has competence: Glucose test (colorimeter)",
-                    "Staff has competence: Hb manual",
-                    "Staff has competence: Wbc, differential count manual",
-                    "Staff has competence: Grouping, Sickling test",
-                    "Staff has competence: Semen analysis",
-                    "Staff has competence: Malaria test",
-                    "Staff has competence: Urine routine, UPT",
-                    "Staff has competence: Stool routine, Occult blood",
-                    "Staff has competence: Serology test (ASO, RA, RBR, Brucella)",
-                    "Staff has competence: Kato Katz schistosomiasis test",
-                    "Staff has competence: Peripheral Smear (PS) Staining & interpretation",
-                    "Staff has competence: Routine biochemistry tests",
-                    "Staff able to operate biochemistry analyzer & do routine maintenance",
-                    "Staff able to operate haematology analyzer & do routine maintenance",
-                    "Staff aware about sample transportation guidelines",
-                    "Internal Quality control run for all test with available control",
-                    "Participation in available External quality control (EQC) program",
-                    "Reporting result according to SOPs, normal reference updated regularly",
-                    "Staff aware about IRLS (AMAN) use"
-                ] 
-            },
-            { 
-                category: "Documentation", 
-                questions: [
-                    "Standard Operating Procedure (SOP) available",
-                    "Lab safety manual available",
-                    "Lab policy / Guideline for collection, storage and transportation of specimen available",
-                    "Lab Quality manual polices & procedures available",
-                    "Lab biosafety manual / Prevention and management of blood and body fluids exposure available",
-                    "Lab Quality control file (IQC,EQC) available",
-                    "MSDS for chemical material available",
-                    "Continuous medical education (CME) file or electronic available",
-                    "Quality Assurance file available"
-                ] 
-            },
-            { 
-                category: "Laboratory Store & Supply system", 
-                questions: [
-                    "Staff aware about internal indent in the system",
-                    "Item consumption, expiry & stock monitor",
-                    "Staff aware about dealing procedure with expiry items",
-                    "Slow moving item & exchange short expiry item with other Health Institutions"
-                ] 
-            },
-            { 
-                category: "Staff learning & development", 
-                questions: [
-                    "Training needs inspection",
-                    "Staff train on semen analysis & MP as needed to refresh knowledge",
-                    "Participate in CME inside institute"
-                ] 
-            }
-        ];
+const CRITERIA = [
+ {name:"Environment",short:"Environment",pri:"Medium",q:[
+  "Bench top where specimen is performed routinely cleaned with approved disinfectant at the end of each procedure",
+  "Lab door locked; access strictly limited to lab person",
+  "Clerical work is separate from infected materials",
+  "Phone and keyboard is cleaned daily with 70% alcohol",
+  "Floor free from stain",
+  "Wash basin have soap / antiseptic solution",
+  "Adequate water supply",
+  "Lab work sink is free from stain"]},
+ {name:"Safety",short:"Safety",pri:"High",q:[
+  "Staff aware about clean spill",
+  "Biohazard Spill kit available",
+  "Sharp items are discarded in sharp container",
+  "Sharp container must not be overfilled (use 3/4)",
+  "PPE is available",
+  "Gloves worn during procedure",
+  "Wearing coat and gloves in the lab only",
+  "Dustbin with appropriate autoclave bag is used: black for non-infected, yellow for infectious",
+  "Staff aware about the appropriate disposable procedure for blood, urine, sputum, stool sample",
+  "No food or drink inside lab",
+  "Eye wash station available",
+  "Staff aware about lab safety polices",
+  "Staff follow safe hygienic practice",
+  "List of lab hazardous material is available",
+  "Fire extinguisher available, staff know how to use it",
+  "Exhausted fan checked periodically",
+  "Appropriate Chemical storage available & labeled with hazard symbol",
+  "Sample storage in refrigerator has separate area",
+  "Staff aware how to do triple package for high infectious sample"]},
+ {name:"Equipment",short:"Equipment",pri:"Medium",q:[
+  "Lab inventory, condemnation, return back, breakdown, receive voucher file available",
+  "Equipment maintenance file available",
+  "Equipment's manual available"]},
+ {name:"Lab Procedure",short:"Procedure",pri:"High",q:[
+  "Laboratory information system (LIS) connected with referral hospital.",
+  "Laboratory information system (LIS) alert the technician about critical value",
+  "Staff follow the pending result and solve any issue with IT department",
+  "Staff aware about the procedure of notifying critical value to the physician and record that in the system for in-lab results",
+  "Notification of referral test critical value file is available.",
+  "Staff aware how to get statistic from the system (MP case detected)",
+  "Lab has a clear criterion for sample rejection",
+  "Staff has competence: CBC",
+  "Staff has competence: Glucose test (colorimeter)",
+  "Staff has competence: Hb manual",
+  "Staff has competence: Wbc, differential count manual",
+  "Staff has competence: Grouping, Sickling test",
+  "Staff has competence: Semen analysis",
+  "Staff has competence: Malaria test",
+  "Staff has competence: Urine routine, UPT",
+  "Staff has competence: Stool routine, Occult blood",
+  "Staff has competence: Serology test (ASO, RA, RBR, Brucella)",
+  "Staff has competence: Kato Katz schistosomiasis test",
+  "Staff has competence: Peripheral Smear (PS) Staining & interpretation",
+  "Staff has competence: Routine biochemistry tests",
+  "Staff able to operate biochemistry analyzer & do routine maintenance",
+  "Staff able to operate haematology analyzer & do routine maintenance",
+  "Staff aware about sample transportation guidelines",
+  "Internal Quality control run for all test with available control",
+  "Participation in available External quality control (EQC) program",
+  "Reporting result according to SOPs, normal reference updated regularly",
+  "Staff aware about IRLS (AMAN) use"]},
+ {name:"Documentation",short:"Documents",pri:"Medium",q:[
+  "Standard Operating Procedure (SOP) available",
+  "Lab safety manual available",
+  "Lab policy / Guideline for collection, storage and transportation of specimen available",
+  "Lab Quality manual polices & procedures available",
+  "Lab biosafety manual / Prevention and management of blood and body fluids exposure available",
+  "Lab Quality control file (IQC,EQC) available",
+  "MSDS for chemical material available",
+  "Continuous medical education (CME) file or electronic available",
+  "Quality Assurance file available"]},
+ {name:"Laboratory Store & Supply system",short:"Store & Supply",pri:"Low",q:[
+  "Staff aware about internal indent in the system",
+  "Item consumption, expiry & stock monitor",
+  "Staff aware about dealing procedure with expiry items",
+  "Slow moving item & exchange short expiry item with other Health Institutions"]},
+ {name:"Staff learning & development",short:"Staff Dev.",pri:"Low",q:[
+  "Training needs inspection",
+  "Staff train on semen analysis & MP as needed to refresh knowledge",
+  "Participate in CME inside institute"]}
+];
 
-        // ==========================================
-        // APPLICATION LOGIC (Do not edit below unless necessary)
-        // ==========================================
-        
-        function parseCSVToGeographicData(csvText) {
-            const lines = csvText.trim().split('\n');
-            const data = {};
-            for (let i = 1; i < lines.length; i++) {
-                const parts = lines[i].split(',');
-                if (parts.length >= 2) {
-                    const wilayat = parts[0].trim();
-                    const institution = parts[1].trim();
-                    if (!data[wilayat]) data[wilayat] = [];
-                    data[wilayat].push(institution);
-                }
-            }
-            return data;
-        }
+const KEY='labAudit.v2';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const geo={};
+CSV.trim().split('\n').slice(1).forEach(l=>{const [w,i]=l.split(',');(geo[w.trim()]??=[]).push(i.trim())});
 
-        const geographicData = parseCSVToGeographicData(rawCSVData);
+// state: answers[id]={s:'met'|'no'|'na',remark,pri}
+let st={wil:'',inst:'',aud:'',date:new Date().toISOString().slice(0,10),a:{},closed:{}};
+try{Object.assign(st,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch{}
+const ans=id=>st.a[id]??={s:'met',remark:'',pri:null};
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(st))}catch{}};
 
-        document.addEventListener("DOMContentLoaded", () => {
-            const wilayatSelect = document.getElementById('wilayat-select');
-            const instSelect = document.getElementById('institution-select');
+const color=p=>p==null?'#94a3b8':p>=90?'#34d399':p>=75?'#60a5fa':p>=60?'#fbbf24':'#fb7185';
+const rating=p=>p>=90?['Excellent','#d6f7e8','#047857']:p>=75?['Good','#dcebff','#1d4ed8']:p>=60?['Needs Improvement','#fff0c7','#a16207']:['Critical','#ffe0e5','#be123c'];
 
-            Object.keys(geographicData).forEach(wilayat => {
-                let opt = document.createElement('option');
-                opt.value = wilayat;
-                opt.textContent = wilayat;
-                wilayatSelect.appendChild(opt);
-            });
+function stats(){
+  const secs=CRITERIA.map((c,si)=>{
+    let met=0,no=0,na=0;
+    c.q.forEach((_,qi)=>{const s=ans(`${si}_${qi}`).s;s==='met'?met++:s==='no'?no++:na++});
+    const app=met+no;
+    return {name:c.name,short:c.short,met,no,na,total:c.q.length,pct:app?met/app*100:null};
+  });
+  const sum=k=>secs.reduce((a,s)=>a+s[k],0);
+  const met=sum('met'),no=sum('no'),na=sum('na'),app=met+no;
+  return {secs,met,no,na,app,pct:app?met/app*100:null};
+}
 
-            wilayatSelect.addEventListener('change', function() {
-                instSelect.innerHTML = '<option value="">Select Institution...</option>';
-                if(this.value) {
-                    instSelect.disabled = false;
-                    geographicData[this.value].forEach(inst => {
-                        let opt = document.createElement('option');
-                        opt.value = inst;
-                        opt.textContent = inst;
-                        instSelect.appendChild(opt);
-                    });
-                } else {
-                    instSelect.disabled = true;
-                }
-            });
+/* ---------- build UI ---------- */
+function build(){
+  const wil=$('#wil');
+  Object.keys(geo).forEach(w=>wil.add(new Option(w,w)));
+  wil.value=st.wil; fillInst(); $('#inst').value=st.inst;
+  $('#aud').value=st.aud; $('#date').value=st.date;
 
-            const checklistContainer = document.getElementById('checklist-container');
-            
-            auditCriteria.forEach((section, sIndex) => {
-                const sectionDiv = document.createElement('div');
-                sectionDiv.className = "bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden";
-                
-                let questionsHTML = '';
-                section.questions.forEach((q, qIndex) => {
-                    const id = `q_${sIndex}_${qIndex}`;
-                    questionsHTML += `
-                        <div class="p-4 border-t border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-slate-50 transition-colors">
-                            <div class="flex-1"><p class="text-sm font-bold text-slate-800">${q}</p></div>
-                            <div class="flex items-center gap-4">
-                                <input type="text" id="remark_${id}" placeholder="State issue..." class="hidden md:w-64 text-xs border border-slate-200 rounded p-2 focus:ring-red-500">
-                                <div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
-                                    <input type="checkbox" name="toggle_${id}" id="${id}" checked class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer z-10" onchange="toggleRemark('${id}')"/>
-                                    <label for="${id}" class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-300 cursor-pointer"></label>
-                                </div>
-                                <span id="label_${id}" class="text-xs font-bold text-emerald-600 w-16 uppercase">Compliant</span>
-                            </div>
-                        </div>
-                    `;
-                });
+  $('#sections').innerHTML=CRITERIA.map((c,si)=>`
+   <section class="card sec ${st.closed[si]?'closed':''}" id="sec${si}" style="animation-delay:${si*60}ms">
+    <div class="sec-h" data-toggle="${si}">
+      <div style="flex:1"><h3>${esc(c.name)}</h3><small id="sub${si}"></small></div>
+      <div class="mini"><div id="mini${si}"></div></div>
+      <div class="pct" id="pct${si}"></div>
+      <svg class="caret" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+    <div class="sec-b"><div>
+      <div class="tools"><button data-allmet="${si}">✓ Set all to Met</button><button data-allna="${si}">Set all N/A</button></div>
+      ${c.q.map((t,qi)=>{const id=`${si}_${qi}`,a=ans(id);return `
+      <div class="q ${a.s}" id="q${id}">
+        <div class="q-row">
+          <div class="q-t">${esc(t)}</div>
+          <div class="seg" role="radiogroup" aria-label="${esc(t)}">
+            ${[['met','Met'],['no','Not met'],['na','N/A']].map(([v,l])=>`<label><input type="radio" name="r${id}" value="${v}" data-id="${id}" ${a.s===v?'checked':''}><span>${l}</span></label>`).join('')}
+          </div>
+        </div>
+        <div class="more"><div>
+          <input type="text" data-remark="${id}" placeholder="What did you find? (issue / evidence)" value="${esc(a.remark)}">
+          <select data-pri="${id}" aria-label="Priority">${['High','Medium','Low'].map(p=>`<option ${(a.pri||c.pri)===p?'selected':''}>${p}</option>`).join('')}</select>
+        </div></div>
+      </div>`}).join('')}
+    </div></div>
+   </section>`).join('');
 
-                sectionDiv.innerHTML = `
-                    <div class="bg-slate-900 px-6 py-4 flex items-center gap-3">
-                        <div class="w-2 h-2 rounded-full bg-red-500"></div>
-                        <h3 class="text-white font-bold uppercase tracking-wide text-sm">${section.category}</h3>
-                    </div>
-                    <div>${questionsHTML}</div>
-                `;
-                checklistContainer.appendChild(sectionDiv);
-            });
-        });
+  $('#nav').innerHTML=CRITERIA.map((c,si)=>`<a href="#sec${si}"><i id="nd${si}"></i>${esc(c.short)}</a>`).join('');
+  refresh();
+}
+function fillInst(){
+  const i=$('#inst'),w=$('#wil').value;
+  i.innerHTML='<option value="">'+(w?'Select Institution…':'Select Wilayat first…')+'</option>';
+  (geo[w]||[]).forEach(n=>i.add(new Option(n,n)));
+  i.disabled=!w;
+}
 
-        window.toggleRemark = function(id) {
-            const checkbox = document.getElementById(id);
-            const label = document.getElementById(`label_${id}`);
-            const remark = document.getElementById(`remark_${id}`);
+/* ---------- live meters ---------- */
+let shown=0;
+function refresh(){
+  const S=stats(), C=163.36;
+  const p=S.pct==null?0:S.pct;
+  const rc=$('#ring-c');
+  rc.style.strokeDashoffset=C*(1-p/100); rc.style.stroke=color(S.pct);
+  const v=$('#ring-v'); countUp(v,shown,p,'%'); shown=p;
+  $('#n-met').textContent=S.met;$('#n-no').textContent=S.no;$('#n-na').textContent=S.na;
+  S.secs.forEach((s,i)=>{
+    const m=$('#mini'+i);m.style.width=(s.pct??0)+'%';m.style.background=color(s.pct);
+    $('#pct'+i).textContent=s.pct==null?'—':Math.round(s.pct)+'%';
+    $('#pct'+i).style.color=color(s.pct);
+    $('#sub'+i).textContent=`${s.met} met · ${s.no} not met${s.na?` · ${s.na} N/A`:''}`;
+    $('#nd'+i).style.background=color(s.pct);
+  });
+}
+function countUp(el,from,to,suf='',dur=600){
+  const t0=performance.now();
+  (function f(t){const k=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-k,3);
+    el.textContent=Math.round(from+(to-from)*e)+suf; if(k<1)requestAnimationFrame(f)})(t0);
+}
 
-            if(checkbox.checked) {
-                label.textContent = "Compliant";
-                label.className = "text-xs font-bold text-emerald-600 w-16 uppercase";
-                remark.classList.add("hidden");
-                remark.value = ""; 
-            } else {
-                label.textContent = "Action Req.";
-                label.className = "text-xs font-bold text-red-600 w-16 uppercase";
-                remark.classList.remove("hidden");
-                remark.focus();
-            }
-        };
+/* ---------- events ---------- */
+const setStatus=(id,s)=>{
+  const a=ans(id);a.s=s;
+  if(s==='no'&&!a.pri){const si=+id.split('_')[0];a.pri=CRITERIA[si].pri}
+  const row=$('#q'+id);row.className='q '+s;
+  row.querySelector(`input[value=${s}]`).checked=true;
+  if(s==='no')setTimeout(()=>row.querySelector('[data-remark]').focus({preventScroll:true}),150);
+};
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.dataset.id){setStatus(t.dataset.id,t.value);save();refresh()}
+  else if(t.dataset.pri){ans(t.dataset.pri).pri=t.value;save()}
+  else if(t.id==='wil'){st.wil=t.value;st.inst='';fillInst();save();clearErr()}
+  else if(t.id==='inst'){st.inst=t.value;save();clearErr()}
+  else if(t.id==='date'){st.date=t.value;save()}
+});
+document.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.dataset.remark){ans(t.dataset.remark).remark=t.value;save()}
+  else if(t.id==='aud'){st.aud=t.value;save()}
+});
+document.addEventListener('click',e=>{
+  const h=e.target.closest('[data-toggle]');
+  if(h){const si=h.dataset.toggle,s=$('#sec'+si);s.classList.toggle('closed');st.closed[si]=s.classList.contains('closed');save();return}
+  const am=e.target.closest('[data-allmet],[data-allna]');
+  if(am){
+    const si=+(am.dataset.allmet??am.dataset.allna),s=am.dataset.allmet!=null?'met':'na';
+    CRITERIA[si].q.forEach((_,qi)=>{const id=`${si}_${qi}`;setStatus(id,s);if(s==='met')ans(id).remark='';
+      const r=$('#q'+id);r.querySelector('[data-remark]').value=ans(id).remark;r.classList.add('flash');setTimeout(()=>r.classList.remove('flash'),700)});
+    save();refresh();
+  }
+});
+const clearErr=()=>document.querySelectorAll('.field.err').forEach(f=>f.classList.remove('err'));
+$('#gen').onclick=()=>{
+  const bad=[['f-wil',st.wil],['f-inst',st.inst]].filter(([,v])=>!v);
+  if(bad.length){
+    bad.forEach(([id])=>$('#'+id).classList.add('err'));
+    const d=$('#details');d.classList.remove('shake');void d.offsetWidth;d.classList.add('shake');
+    window.scrollTo({top:0});return;
+  }
+  report();
+};
 
-        window.generateReport = function() {
-            const wilayat = document.getElementById('wilayat-select').value;
-            const inst = document.getElementById('institution-select').value;
-            const auditor = document.getElementById('auditor-name').value || "Unspecified Auditor";
-            
-            if(!wilayat || !inst) {
-                alert("Please select a Wilayat and Institution before generating the report.");
-                return;
-            }
+/* ---------- report ---------- */
+function gaugeSVG(p){
+  const L=Math.PI*90; // half circle r=90
+  return `<svg viewBox="0 0 220 125" width="100%"><path d="M20 110 A90 90 0 0 1 200 110" fill="none" stroke="#eef2f7" stroke-width="18" stroke-linecap="round"/>
+  <path id="g-arc" d="M20 110 A90 90 0 0 1 200 110" fill="none" stroke="${color(p)}" stroke-width="18" stroke-linecap="round" stroke-dasharray="${L}" stroke-dashoffset="${L}" style="transition:stroke-dashoffset 1.3s cubic-bezier(.2,.8,.2,1)" data-to="${L*(1-p/100)}"/></svg>`;
+}
+function radarSVG(secs){
+  const cx=150,cy=140,R=95,n=secs.length;
+  const pt=(i,r)=>{const a=-Math.PI/2+2*Math.PI*i/n;return [cx+r*Math.cos(a),cy+r*Math.sin(a)]};
+  const ring=f=>secs.map((_,i)=>pt(i,R*f).join(',')).join(' ');
+  const poly=secs.map((s,i)=>pt(i,R*(s.pct??0)/100).join(',')).join(' ');
+  return `<svg viewBox="-30 0 360 280" width="100%">
+   ${[.25,.5,.75,1].map(f=>`<polygon points="${ring(f)}" fill="none" stroke="#e2e8f0"/>`).join('')}
+   ${secs.map((_,i)=>{const [x,y]=pt(i,R);return `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#e2e8f0"/>`}).join('')}
+   <polygon class="radar-p" points="${poly}" fill="#7c9cf544" stroke="#6b8cf0" stroke-width="2.5" stroke-linejoin="round" style="transform-origin:${cx}px ${cy}px;transform:scale(0);transition:transform 1s cubic-bezier(.2,.8,.2,1)"/>
+   ${secs.map((s,i)=>{const [x,y]=pt(i,R*(s.pct??0)/100);return `<circle cx="${x}" cy="${y}" r="4" fill="${color(s.pct)}" stroke="#fff" stroke-width="2"/>`}).join('')}
+   ${secs.map((s,i)=>{const [x,y]=pt(i,R+22);const a=x<cx-5?'end':x>cx+5?'start':'middle';return `<text x="${x}" y="${y+4}" text-anchor="${a}" font-size="11" font-weight="600" fill="#475569">${esc(s.short)}</text>`}).join('')}
+  </svg>`;
+}
+function donutSVG(S){
+  const r=48,C=2*Math.PI*r,tot=S.met+S.no+S.na||1;let off=0;
+  const seg=(n,c)=>{const l=C*n/tot,o=`<circle cx="70" cy="70" r="${r}" fill="none" stroke="${c}" stroke-width="20" stroke-dasharray="${l} ${C-l}" stroke-dashoffset="${-off}" transform="rotate(-90 70 70)"/>`;off+=l;return n?o:''};
+  return `<svg viewBox="0 0 140 140" width="170" style="margin:auto">${seg(S.met,'#34d399')}${seg(S.no,'#fb7185')}${seg(S.na,'#cbd5e1')}
+   <text x="70" y="68" text-anchor="middle" font-size="24" font-weight="800">${tot}</text><text x="70" y="86" text-anchor="middle" font-size="10" fill="#64748b" font-weight="700">REQUIREMENTS</text></svg>`;
+}
+function report(){
+  const S=stats(),pct=S.pct??0,[rl,rbg,rink]=rating(pct);
+  const items=[];
+  CRITERIA.forEach((c,si)=>c.q.forEach((t,qi)=>{const a=ans(`${si}_${qi}`);if(a.s==='no')items.push({cat:c.name,t,remark:a.remark||'No remark provided.',pri:a.pri||c.pri})}));
+  const order={High:0,Medium:1,Low:2};items.sort((a,b)=>order[a.pri]-order[b.pri]);
+  const hi=items.filter(i=>i.pri==='High').length;
+  const ranked=S.secs.filter(s=>s.pct!=null).sort((a,b)=>b.pct-a.pct);
+  const best=ranked[0],worst=ranked[ranked.length-1];
+  const strengths=S.secs.filter(s=>s.pct===100),gaps=S.secs.filter(s=>s.pct!=null&&s.pct<100).sort((a,b)=>a.pct-b.pct);
+  const safety=S.secs.find(s=>s.name==='Safety');
+  const d=new Date(st.date||Date.now());
+  const ds=d.toISOString().slice(0,10);
+  const aud=st.aud||'Unspecified Auditor';
+  const id=`AUD-${st.inst.replace(/[^A-Za-z]/g,'').slice(0,3).toUpperCase()}-${ds.replace(/-/g,'')}`;
 
-            let totalQuestions = 0;
-            let totalCompliant = 0;
-            let sectionScores = [];
-            let negativeFindings = [];
+  let summary=`<b>${esc(st.inst)}</b> (${esc(st.wil)}) was audited on ${ds} by ${esc(aud)}. Of <b>${S.app}</b> applicable requirements, <b>${S.met}</b> were met, giving an overall compliance of <b>${pct.toFixed(1)}%</b> — rated <b>${rl}</b>.`;
+  if(S.app===0) summary=`No applicable requirements were scored for this audit.`;
+  else if(!items.length) summary+=` No corrective actions are required.`;
+  else {
+    summary+=` Strongest area: <b>${esc(best.name)}</b> (${Math.round(best.pct)}%); weakest: <b>${esc(worst.name)}</b> (${Math.round(worst.pct)}%). <b>${items.length}</b> corrective action${items.length>1?'s':''} raised${hi?`, <b>${hi}</b> high priority — address these first`:''}.`;
+    if(safety&&safety.pct!=null&&safety.pct<100) summary+=` Safety shortfalls were found and should be reviewed with the lab in-charge promptly.`;
+  }
 
-            auditCriteria.forEach((section, sIndex) => {
-                let sectionCompliant = 0;
-                section.questions.forEach((q, qIndex) => {
-                    totalQuestions++;
-                    const id = `q_${sIndex}_${qIndex}`;
-                    const isCompliant = document.getElementById(id).checked;
-                    
-                    if(isCompliant) {
-                        sectionCompliant++;
-                        totalCompliant++;
-                    } else {
-                        const remark = document.getElementById(`remark_${id}`).value || "No remark provided.";
-                        negativeFindings.push({ category: section.category, question: q, remark: remark });
-                    }
-                });
-                const percentage = (sectionCompliant / section.questions.length) * 100;
-                sectionScores.push({ category: section.category, score: percentage });
-            });
+  $('#report').innerHTML=`
+   <div class="r-head">
+     <div><h1>Ministry of Health</h1><p>Directorate General of PHC · Dhofar</p><span class="tag">Laboratory Audit Summary</span></div>
+     <div class="mono">ID: ${id}</div>
+   </div>
+   <div class="meta">
+     <div><p>Institution</p><b>${esc(st.inst)}</b></div><div><p>Wilayat</p><b>${esc(st.wil)}</b></div>
+     <div><p>Auditor</p><b>${esc(aud)}</b></div><div><p>Date</p><b>${ds}</b></div>
+   </div>
+   <div class="hero-r">
+     <div class="gauge"><div style="position:relative">${gaugeSVG(pct)}<div class="big" id="r-big">0%</div></div><span class="badge" style="background:${rbg};color:${rink}">${rl}</span></div>
+     <div>
+       <div class="tiles">
+         <div class="tile" style="background:var(--met-bg);color:var(--met-ink)"><b>${S.met}</b><span>Met</span></div>
+         <div class="tile" style="background:var(--no-bg);color:var(--no-ink)"><b>${S.no}</b><span>Not met</span></div>
+         <div class="tile" style="background:var(--na-bg);color:var(--na-ink)"><b>${S.na}</b><span>N/A</span></div>
+       </div>
+       <div class="legend" style="justify-content:flex-start;margin-top:12px;color:var(--mute)">
+         <span><i style="background:#34d399"></i>≥90 Excellent</span><span><i style="background:#60a5fa"></i>75–89 Good</span><span><i style="background:#fbbf24"></i>60–74 Needs improvement</span><span><i style="background:#fb7185"></i>&lt;60 Critical</span>
+       </div>
+     </div>
+   </div>
+   <div class="summary"><h4>Auto-generated summary</h4>${summary}</div>
+   <div class="charts">
+     <div class="panel"><div class="r-h">Compliance profile</div>${radarSVG(S.secs)}</div>
+     <div class="panel"><div class="r-h">Response breakdown</div>${donutSVG(S)}
+       <div class="legend"><span><i style="background:#34d399"></i>Met</span><span><i style="background:#fb7185"></i>Not met</span><span><i style="background:#cbd5e1"></i>N/A</span></div></div>
+   </div>
+   <div class="panel" style="margin-bottom:20px"><div class="r-h">Score by section</div>
+     ${S.secs.map(s=>`<div class="brow"><span>${esc(s.name)}</span><div class="btrack"><div data-w="${s.pct??0}" style="background:${color(s.pct)}"></div></div><b style="color:${color(s.pct)};text-align:right">${s.pct==null?'—':Math.round(s.pct)+'%'}</b></div>`).join('')}
+   </div>
+   <div class="two">
+     <div class="good"><div class="r-h">Strengths (100% compliant)</div><ul>${strengths.map(s=>`<li><i style="background:#34d399"></i>${esc(s.name)}</li>`).join('')||'<li style="color:var(--mute)">No section reached full compliance.</li>'}</ul></div>
+     <div class="warn"><div class="r-h">Opportunities to improve</div><ul>${gaps.map(s=>`<li><i style="background:${color(s.pct)}"></i>${esc(s.name)} — ${Math.round(s.pct)}% (${s.no} gap${s.no>1?'s':''})</li>`).join('')||'<li style="color:var(--mute)">None identified.</li>'}</ul></div>
+   </div>
+   <div class="panel" style="padding:0;overflow:hidden"><div class="r-h" style="padding:14px 14px 0">Corrective action matrix</div>
+     <table><thead><tr><th style="width:20%">Area</th><th style="width:38%">Requirement</th><th style="width:30%">Auditor remark</th><th>Priority</th></tr></thead><tbody>
+     ${items.map(i=>`<tr><td><b>${esc(i.cat)}</b></td><td>${esc(i.t)}</td><td style="color:#be123c">${esc(i.remark)}</td><td><span class="pri p-${i.pri}">${i.pri}</span></td></tr>`).join('')||'<tr><td colspan="4" style="text-align:center;color:var(--mute);padding:18px">No corrective actions required — fully compliant.</td></tr>'}
+     </tbody></table></div>
+   <div class="sig"><div><hr>Auditor signature<b>${esc(aud)}</b></div><div><hr>Laboratory in-charge<b>Name &amp; signature</b></div></div>
+   <div class="r-actions no-print">
+     <button class="btn ghost" id="back">← Edit audit</button>
+     <button class="btn primary" onclick="window.print()">🖨 Print / Save as PDF</button>
+     <button class="btn ghost" id="fresh">Start new audit</button>
+   </div>`;
 
-            const overallScore = ((totalCompliant / totalQuestions) * 100).toFixed(1);
-            
-            document.getElementById('rep-inst').textContent = inst;
-            document.getElementById('rep-wilayat').textContent = wilayat;
-            document.getElementById('rep-auditor').textContent = auditor;
-            document.getElementById('rep-sig-auditor').textContent = auditor;
-            
-            const today = new Date();
-            document.getElementById('rep-date').textContent = today.toISOString().split('T')[0];
-            document.getElementById('rep-id').textContent = `ID: AUD-${inst.substring(0,3).toUpperCase()}-${today.getFullYear()}`;
-            document.getElementById('rep-score').textContent = `${overallScore}%`;
+  $('#app').hidden=true;$('#report').hidden=false;window.scrollTo(0,0);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    const arc=$('#g-arc');arc.style.strokeDashoffset=arc.dataset.to;
+    $('.radar-p').style.transform='scale(1)';
+    document.querySelectorAll('[data-w]').forEach(b=>b.style.width=b.dataset.w+'%');
+    countUp($('#r-big'),0,pct,'%',1300);
+    $('#r-big').style.color=color(S.pct);
+  }));
+  $('#back').onclick=()=>{$('#report').hidden=true;$('#app').hidden=false;window.scrollTo(0,0)};
+  $('#fresh').onclick=()=>{if(confirm('Clear all answers and start a new audit?')){localStorage.removeItem(KEY);location.reload()}};
+}
 
-            const strengthsList = document.getElementById('rep-strengths');
-            const oppList = document.getElementById('rep-opportunities');
-            strengthsList.innerHTML = '';
-            oppList.innerHTML = '';
-
-            sectionScores.forEach(sec => {
-                const li = document.createElement('li');
-                if(sec.score === 100) {
-                    li.className = "text-xs text-emerald-900 font-medium flex items-center gap-2";
-                    li.innerHTML = `<div class="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div> ${sec.category} (100%)`;
-                    strengthsList.appendChild(li);
-                } else {
-                    li.className = "text-xs text-orange-900 font-medium flex items-center gap-2";
-                    li.innerHTML = `<div class="w-1.5 h-1.5 bg-orange-500 rounded-full"></div> ${sec.category} (${sec.score.toFixed(0)}%)`;
-                    oppList.appendChild(li);
-                }
-            });
-
-            if(strengthsList.innerHTML === '') strengthsList.innerHTML = '<li class="text-xs text-emerald-700 italic">No areas achieved full compliance.</li>';
-            if(oppList.innerHTML === '') oppList.innerHTML = '<li class="text-xs text-orange-700 italic">Excellent! No immediate opportunities for improvement identified.</li>';
-
-            const matrix = document.getElementById('rep-matrix');
-            matrix.innerHTML = '';
-            if(negativeFindings.length === 0) {
-                matrix.innerHTML = `<tr><td colspan="3" class="p-4 text-center text-xs text-slate-500 italic">No corrective actions required. The institution is fully compliant.</td></tr>`;
-            } else {
-                negativeFindings.forEach(finding => {
-                    matrix.innerHTML += `
-                        <tr>
-                            <td class="p-3 border-r border-slate-200 font-bold text-slate-800">${finding.category}</td>
-                            <td class="p-3 border-r border-slate-200 text-slate-600">${finding.question}</td>
-                            <td class="p-3 text-red-700 font-medium">${finding.remark}</td>
-                        </tr>
-                    `;
-                });
-            }
-
-            document.getElementById('app-container').classList.add('hidden');
-            document.getElementById('report-container').classList.remove('hidden');
-            window.scrollTo(0,0);
-        }
-    </script>
+build();
+</script>
 </body>
-
 </html>
